@@ -326,6 +326,41 @@ html.dark .web-login-error {
   cursor: not-allowed;
 }
 
+.web-auth-logout-button {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 7px;
+  background: var(--bg-hover);
+  color: #ef4444;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+}
+
+.web-auth-logout-button:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.web-auth-logout-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.web-auth-logout-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .terminal-panel {
   display: grid;
   grid-template-rows: 38px auto minmax(0, 1fr);

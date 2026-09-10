@@ -12,6 +12,7 @@ const themeOptionsSource = await readFile(new URL("../lib/theme.ts", import.meta
 const enSource = await readFile(new URL("../lib/i18n/messages/en.ts", import.meta.url), "utf8");
 const zhSource = await readFile(new URL("../lib/i18n/messages/zh-CN.ts", import.meta.url), "utf8");
 const loginSource = await readFile(new URL("../app/login/page.tsx", import.meta.url), "utf8");
+const logoutSource = await readFile(new URL("./WebAuthLogoutButton.tsx", import.meta.url), "utf8");
 
 test("opens one settings panel from direct sidebar shortcuts", () => {
   assert.match(shellSource, /<SettingsPanel/);
@@ -131,13 +132,18 @@ test("uses the compact controls glyph for General", () => {
   assert.match(panelSource, /section === "general"[\s\S]*?<path d="M20 7h-9M14 17H5" \/>[\s\S]*?<circle cx="7" cy="7" r="3" \/>[\s\S]*?<circle cx="17" cy="17" r="3" \/>/);
 });
 
-test("keeps password authentication to one login field and one settings action", () => {
+test("keeps password authentication to one login field and logout actions", () => {
   assert.equal((loginSource.match(/type="password"/g) ?? []).length, 1);
   assert.doesNotMatch(loginSource, /type="(?:text|email)"/);
   assert.match(loginSource, /autoComplete="current-password"/);
   assert.match(loginSource, /!destination\.startsWith\("\/\/"\)/);
-  assert.match(panelSource, /fetch\("\/api\/web-auth", \{ method: "DELETE" \}\)/);
-  assert.match(panelSource, /t\("auth\.logOut"\)/);
+  assert.match(logoutSource, /fetch\("\/api\/web-auth", \{ method: "DELETE" \}\)/);
+  assert.match(logoutSource, /t\("auth\.logOut"\)/);
+  assert.match(panelSource, /<WebAuthLogoutButton variant="settings"/);
+  assert.match(sidebarSource, /<WebAuthLogoutButton variant="toolbar"/);
+  assert.doesNotMatch(panelSource, /\/api\/web-auth/);
+  assert.doesNotMatch(sidebarSource, /\/api\/web-auth/);
   assert.match(loginSource, /className="web-login-composer"[\s\S]*?type="password"[\s\S]*?<button type="submit"/);
   assert.match(globalCssSource, /\.web-login-composer \{[\s\S]*?display: flex;[\s\S]*?border-radius: 14px/);
+  assert.match(globalCssSource, /\.web-auth-logout-button \{/);
 });
