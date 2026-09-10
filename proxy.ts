@@ -5,7 +5,6 @@ import {
 } from "@/lib/request-security";
 import {
   isValidWebSessionToken,
-  isValidBasicAuthorization,
   isWebPasswordEnabled,
   PI_WEB_SESSION_COOKIE,
 } from "@/lib/web-auth";
@@ -32,8 +31,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authenticated = isValidWebSessionToken(request.cookies.get(PI_WEB_SESSION_COOKIE)?.value, password)
-    || (isApiRequest && isValidBasicAuthorization(request.headers.get("authorization"), password));
+  const authenticated = isValidWebSessionToken(
+    request.cookies.get(PI_WEB_SESSION_COOKIE)?.value,
+    password,
+  );
   if (request.nextUrl.pathname === "/login") {
     return authenticated
       ? NextResponse.redirect(new URL("/", request.url))
@@ -49,12 +50,9 @@ export function proxy(request: NextRequest) {
       }
       return NextResponse.redirect(loginUrl);
     }
-    return new NextResponse("Authentication required", {
+    return NextResponse.json({ error: "Authentication required" }, {
       status: 401,
-      headers: {
-        "Cache-Control": "no-store",
-        "WWW-Authenticate": 'Basic realm="Pi Web", charset="UTF-8"',
-      },
+      headers: { "Cache-Control": "no-store" },
     });
   }
 

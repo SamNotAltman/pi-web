@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasJsonContentType, isApiRequestAllowed } from "@/lib/request-security";
 import {
   createWebSessionToken,
-  isValidBasicAuthorization,
   isValidWebPassword,
   isValidWebSessionToken,
   isWebPasswordEnabled,
@@ -37,7 +36,6 @@ export async function GET(request: NextRequest) {
   const password = process.env.PI_WEB_PASSWORD;
   const enabled = isWebPasswordEnabled(password);
   const authenticated = !enabled
-    || isValidBasicAuthorization(request.headers.get("authorization"), password)
     || isValidWebSessionToken(request.cookies.get(PI_WEB_SESSION_COOKIE)?.value, password);
   return NextResponse.json(
     { enabled, authenticated },
