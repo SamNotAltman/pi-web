@@ -41,12 +41,35 @@ test("logs in with one password and reports the signed session", async () => {
   const cookie = response.headers.get("set-cookie");
   assert.match(cookie, /^pi_web_session=v1\./);
   assert.match(cookie, /HttpOnly/i);
-  assert.match(cookie, /SameSite=strict/i);
+  assert.match(cookie, /SameSite=lax/i);
   assert.match(cookie, /Path=\//i);
+  assert.doesNotMatch(cookie, /Max-Age=/i);
 
   const cookiePair = cookie.split(";", 1)[0];
   response = await GET(request("GET", undefined, { Cookie: cookiePair }));
   assert.deepEqual(await response.json(), { enabled: true, authenticated: true });
+});
+
+test("remember-me login persists the session cookie", async () => {
+  const response = await POST(request("POST", {
+    password: "correct horse battery staple",
+    rememberMe: true,
+  }));
+  assert.equal(response.status, 200);
+  const cookie = response.headers.get("set-cookie");
+  assert.match(cookie, /^pi_web_session=v1\./);
+  assert.match(cookie, /Max-Age=2592000/i);
+  assert.match(cookie, /Expires=/i);
+  assert.match(cookie, /SameSite=lax/i);
+});
+
+test("non-boolean rememberMe values do not persist the session cookie", async () => {
+  const response = await POST(request("POST", {
+    password: "correct horse battery staple",
+    rememberMe: "true",
+  }));
+  assert.equal(response.status, 200);
+  assert.doesNotMatch(response.headers.get("set-cookie"), /Max-Age=/i);
 });
 
 test("logout clears the session cookie", async () => {

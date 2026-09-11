@@ -17,13 +17,15 @@ function LoginForm() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const rememberMe = new FormData(event.currentTarget).get("rememberMe") === "true";
     setBusy(true);
     setError("");
     try {
       const response = await fetch("/api/web-auth", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, rememberMe }),
       });
       if (!response.ok) {
         setError(response.status === 401 ? t("auth.invalidPassword") : t("auth.loginFailed"));
@@ -69,6 +71,10 @@ function LoginForm() {
               {busy ? t("auth.loggingIn") : t("auth.logIn")}
             </button>
           </div>
+          <label className="web-login-remember">
+            <input id="web-login-remember" type="checkbox" name="rememberMe" value="true" />
+            {t("auth.rememberMe")}
+          </label>
           <p className="web-login-error" role="alert" aria-live="polite">{error}</p>
         </form>
       </div>

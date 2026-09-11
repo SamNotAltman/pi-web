@@ -16,14 +16,23 @@ function isSecureRequest(request: Request): boolean {
     || request.headers.get("x-forwarded-proto")?.split(",", 1)[0]?.trim() === "https";
 }
 
-function clearSessionCookie(response: NextResponse, request: Request): void {
-  response.cookies.set({
+function sessionCookieOptions(request: Request) {
+  return {
     name: PI_WEB_SESSION_COOKIE,
-    value: "",
-    httpOnly: true,
-    sameSite: "strict",
+    httpOnly: true as const,
+    // Lax is sent on top-level navigations after a browser restart, bookmark,
+    // or dock/home-screen launch. Strict is omitted in those cases and looks
+    // like Remember me failed. API CSRF is enforced separately by Origin checks.
+    sameSite: "lax" as const,
     secure: isSecureRequest(request),
     path: "/",
+  };
+}
+
+function clearSessionCookie(response: NextResponse, request: Request): void {
+  response.cookies.set({
+    ...sessionCookieOptions(request),
+    value: "",
     maxAge: 0,
   });
 }
@@ -56,20 +65,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Password authentication is disabled" }, { status: 404 });
   }
 
-  const body = await request.json().catch(() => null) as { password?: unknown } | null;
+  const body = await request.json().catch(() => null) as { password?: unknown; rememberMe?: unknown } | null;
   if (!body || typeof body.password !== "string" || !isValidWebPassword(body.password, password)) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
+  const rememberMe = body.rememberMe === true;
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
-    name: PI_WEB_SESSION_COOKIE,
+    ...sessionCookieOptions(request),
     value: createWebSessionToken(password),
-    httpOnly: true,
-    sameSite: "strict",
-    secure: isSecureRequest(request),
-    path: "/",
-    maxAge: PI_WEB_SESSION_MAX_AGE,
+    ...(rememberMe
+      ? {
+        maxAge: PI_WEB_SESSION_MAX_AGE,
+        expires: new Date(Date.now() + PI_WEB_SESSION_MAX_AGE * 1000),
+      }
+      : {}),
   });
   return response;
 }

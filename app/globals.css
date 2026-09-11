@@ -264,7 +264,7 @@ body {
   border: 0;
 }
 
-.web-login-form input {
+.web-login-composer input {
   flex: 1;
   min-width: 0;
   height: 30px;
@@ -277,8 +277,38 @@ body {
   font-size: 16px;
 }
 
-.web-login-form input::placeholder {
+.web-login-composer input::placeholder {
   color: var(--text-dim);
+}
+
+.web-login-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 12px 4px 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 16px;
+  user-select: none;
+}
+
+.web-login-remember input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.web-login-remember:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.web-login-remember:has(input:disabled) input {
+  cursor: not-allowed;
 }
 
 .web-login-error {

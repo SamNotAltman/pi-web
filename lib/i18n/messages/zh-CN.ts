@@ -41,6 +41,7 @@ export const zhCNLocale: LocalePlugin = {
     "auth.prompt": "登录后继续使用",
     "auth.password": "密码",
     "auth.logIn": "登录",
+    "auth.rememberMe": "记住我",
     "auth.loggingIn": "正在登录...",
     "auth.invalidPassword": "密码不正确",
     "auth.loginFailed": "登录失败，请重试。",

@@ -144,6 +144,15 @@ test("keeps password authentication to one login field and logout actions", () =
   assert.doesNotMatch(panelSource, /\/api\/web-auth/);
   assert.doesNotMatch(sidebarSource, /\/api\/web-auth/);
   assert.match(loginSource, /className="web-login-composer"[\s\S]*?type="password"[\s\S]*?<button type="submit"/);
+  assert.match(loginSource, /FormData\(event\.currentTarget\)\.get\("rememberMe"\) === "true"/);
+  assert.match(loginSource, /JSON\.stringify\(\{ password, rememberMe \}\)/);
+  assert.match(loginSource, /name="rememberMe"/);
+  assert.match(loginSource, /type="checkbox"/);
+  assert.match(loginSource, /t\("auth\.rememberMe"\)/);
+  assert.match(enSource, /"auth\.rememberMe": "Remember me"/);
+  assert.match(zhSource, /"auth\.rememberMe": "记住我"/);
   assert.match(globalCssSource, /\.web-login-composer \{[\s\S]*?display: flex;[\s\S]*?border-radius: 14px/);
+  assert.match(globalCssSource, /\.web-login-composer input \{/);
+  assert.match(globalCssSource, /\.web-login-remember \{/);
   assert.match(globalCssSource, /\.web-auth-logout-button \{/);
 });

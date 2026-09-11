@@ -41,6 +41,7 @@ export const enLocale: LocalePlugin = {
     "auth.prompt": "Sign in to continue",
     "auth.password": "Password",
     "auth.logIn": "Log in",
+    "auth.rememberMe": "Remember me",
     "auth.loggingIn": "Logging in...",
     "auth.invalidPassword": "Incorrect password",
     "auth.loginFailed": "Could not log in. Try again.",

@@ -41,6 +41,7 @@ export const zhTWLocale: LocalePlugin = {
     "auth.prompt": "登入後繼續使用",
     "auth.password": "密碼",
     "auth.logIn": "登入",
+    "auth.rememberMe": "記住我",
     "auth.loggingIn": "正在登入...",
     "auth.invalidPassword": "密碼不正確",
     "auth.loginFailed": "登入失敗，請再試一次。",
