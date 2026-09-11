@@ -52,14 +52,14 @@ One `AgentSessionWrapper` per session id in `globalThis.__piSessions` (survives 
 `AgentSession.fork()` mutates inner state in-place — after fork, `inner.sessionId` is the *new* id. Leaving the wrapper under the old id corrupts later forks/`parentSession`. `send("fork")` must capture `newSessionId` then `this.destroy()`. The next request for the original id reloads from the original file.
 
 ### Two kinds of branching — don't confuse them
-- **Fork** (Fork on user message): new `.jsonl`, sidebar child via `parentSession`.
-- **In-session branch** (Continue / BranchNavigator): `navigate_tree` in the same file. Switch with `/api/sessions/[id]/context?leafId=`.
+- **Fork** ("New session" on user message): new `.jsonl`, sidebar child via `parentSession`.
+- **In-session branch** ("Edit from here" / BranchNavigator): `navigate_tree` in the same file. Switch with `/api/sessions/[id]/context?leafId=`.
 
 ### Session files can be fully rewritten
 `parentSession` is display metadata only. Safe to `writeFileSync` the whole file (used when cascade-reparenting children on delete).
 
 ### ToolCall field normalization
-File format: `{type:"toolCall", id, name, arguments}`. UI type: `{toolCallId, toolName, input}`. `normalizeToolCalls()` in `lib/normalize.ts` — used on file load and streaming.
+File format: `{type:"toolCall", id, name, arguments}`. UI type: `{toolCallId, toolName, input}`. `normalizeToolCalls()` in `lib/normalize.ts` — used on file load (`session-reader.ts`) and streaming (`handleAgentEvent` in `hooks/useAgentSession.ts`).
 
 ### New session tool preset
 `POST /api/agent/new` takes `toolNames[]`, persisted as versioned `pi-web:tool-selection`. No entry = legacy (Pi default). Empty array = Chat only: resolves before services, loads no extensions/skills/prompts/themes, replaces the base prompt with discovered context files. Crossing Chat-only rebuilds the wrapper; nonempty preset changes update in place. Subagents persist tools + skill/extension switches in `resourceSnapshot`; extensions cannot expose reserved `Agent` / `get_subagent_result` / `steer_subagent`. See `docs/adr/0002-chat-only-tool-selection.md`.
@@ -89,6 +89,8 @@ Git prints POSIX paths even on Windows — run them through `toNativePath()` (`l
 
 ### Built-in subagents
 `builtInEnabled` in `~/.pi/agent/agents/settings.json`, default `false`; malformed fails closed. Inline factory always present but registers no tools while disabled; user must reload the session after toggling. When enabled, only a legacy `pi-subagents` extension that registers reserved tools is removed. Runtime `Agent` dispatch re-checks the setting. See `docs/adr/0003-built-in-subagent-toggle.md`.
+
+Agent profile files (`~/.pi/agent/agents/*.md`, project `.pi/agents/*.md`) are shared with other runtimes: save round-trips frontmatter keys this app does not own (`name`, `allowed_subagents`, `exclude_extensions`, `disallowed_tools`, …) and carries foreign `ext:` tool selectors through. Managed keys are exactly `description`, `display_name`, `tools`, `load_skills`, `load_extensions`, `enabled`, `inherit_context`, `run_in_background`, `model`, `thinking`, `max_turns`. The `skills` / `extensions` spellings pi-subagents reads are seeded on first save and kept in step while they are booleans; a hand-authored whitelist such as `extensions: pi-advisor-flow` is never rewritten, and the two flags fall back to those aliases when `load_skills` / `load_extensions` are absent.
 
 ### Auth and model config
 Provider listing is capability-driven (`lib/provider-listing.ts`), never by id — dual-auth providers (anthropic, github-copilot today; the set changes) must appear once. After any auth change, refresh *both* lists. `auth.json` holds one credential per provider; delete via `removeStoredCredentialIfType()` under Pi's file lock. OAuth/device/manual: `GET /api/auth/login/[provider]`; manual code POSTs to a short-lived `globalThis.__piLoginCallbacks` token. Status endpoints must never return the raw key. Test route is `app/api/models-config/test/route.ts` — `app/api/models/test/` does not exist.
