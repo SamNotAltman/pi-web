@@ -2,22 +2,29 @@
 
 ## Quick Start
 
-```bash
-npm run dev   # port 30141
-```
-
 Typecheck: `node_modules/.bin/tsc --noEmit`  
-Lint: `npm run lint`  
-**Never run `next build` during dev** — pollutes `.next/` and breaks `npm run dev`.
+Lint: `npm run lint`
 
-### PM2 (this machine)
+### This machine is PM2 production — do not skip this
 
-Served by PM2 process `pi-web`; ecosystem file `/Users/sam/.pm2/ecosystem.config.cjs` (`cwd` this repo, `script` `bin/pi-web.js`). Code changes need a production build and restart:
+Port 30141 is the PM2 process `pi-web` (`/Users/sam/.pm2/ecosystem.config.cjs`, `cwd` this repo, `script` `bin/pi-web.js`). It is **not** `npm run dev`. A listener on 30141 is not a reason to skip the build.
+
+After you change application code, **run the following yourself before you finish**. Do not describe the commands instead of running them. Do not wait for the user to ask, confirm, or say “did you do it?”.
 
 ```bash
 npm run build
 pm2 restart pi-web
 ```
+
+`npm run build` here is required. The “never run `next build` during dev” rule below applies **only** when you yourself started `npm run dev` in this shell and it is still running. It does not apply to the normal PM2 workflow on this machine.
+
+### Local `npm run dev` (only when explicitly iterating that way)
+
+```bash
+npm run dev   # port 30141 — conflicts with PM2; stop `pi-web` first
+```
+
+**Never run `next build` / `npm run build` while `next dev` is running** — pollutes `.next/` and breaks the dev server. If you used `npm run dev`, stop it before the PM2 production build above.
 
 ### Dev server troubleshooting
 
