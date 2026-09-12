@@ -699,3 +699,45 @@ test("renders image warnings for known text-only defaults without an explicit mo
     clearDraft(draftKey);
   }
 });
+
+test("places a new-session control after attach and before the model selector", () => {
+  const source = readFileSync(new URL("./ChatInput.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("{/* LEFT: attach + new session + model selector");
+  assert.notEqual(start, -1);
+  const block = source.slice(start, source.indexOf("{/* spacer */", start));
+  const attachAt = block.indexOf('t("chat.attachImage")');
+  const newAt = block.indexOf("onNewSession");
+  const modelAt = block.indexOf("<ModelSelector");
+  assert.ok(attachAt >= 0);
+  assert.ok(newAt > attachAt);
+  assert.ok(modelAt > newAt);
+  assert.match(block, /t\("chat.newSession"\)/);
+});
+
+test("renders a new-session button after attach when provided", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(
+      I18nProvider,
+      null,
+      React.createElement(ChatInput, {
+        onSend() {},
+        onAbort() {},
+        onModelChange() {},
+        onNewSession() {},
+        isStreaming: false,
+        cwd: "/tmp/project",
+        model: { provider: "deepseek", modelId: "deepseek-v4-flash" },
+        modelList: [{ provider: "deepseek", id: "deepseek-v4-flash", name: "DeepSeek V4 Flash" }],
+      }),
+    ),
+  );
+
+  assert.match(html, /title="Attach image"/);
+  assert.match(html, />DeepSeek V4 Flash</);
+  assert.match(html, /aria-label="New"/);
+  assert.match(html, /title="New session in \/tmp\/project"/);
+  const attachAt = html.indexOf("Attach image");
+  const newAt = html.indexOf('aria-label="New"');
+  const modelAt = html.indexOf("DeepSeek V4 Flash");
+  assert.ok(attachAt >= 0 && newAt > attachAt && modelAt > newAt);
+});
