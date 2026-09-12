@@ -544,6 +544,49 @@ export function ModelScopeWarningBanner({ warnings }: { warnings?: string[] }) {
   );
 }
 
+function StopAgentButton({
+  onAbort,
+  title,
+  label,
+  iconOnly = false,
+}: {
+  onAbort: () => void;
+  title: string;
+  label: string;
+  iconOnly?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onAbort}
+      title={title}
+      aria-label={iconOnly ? title : undefined}
+      style={{
+        flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: iconOnly ? 0 : 6,
+        padding: iconOnly ? 0 : "8px 14px",
+        width: iconOnly ? 32 : undefined,
+        height: 32,
+        background: "rgba(239,68,68,0.08)",
+        border: "1px solid rgba(239,68,68,0.3)",
+        borderRadius: 9,
+        color: "#ef4444",
+        cursor: "pointer",
+        fontSize: 12, fontWeight: 600,
+        whiteSpace: "nowrap", letterSpacing: "-0.01em",
+        transition: "background 0.12s",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.16)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
+    >
+      <svg width={iconOnly ? 12 : 10} height={iconOnly ? 12 : 10} viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="7" height="7" rx="1.5" fill="currentColor" />
+      </svg>
+      {!iconOnly && label}
+    </button>
+  );
+}
+
 export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
   onSend, onAbort, onSteer, onFollowUp, isStreaming, model, isAutoModelSelection, modelNames, modelList, modelError, modelScopeWarnings, onModelChange, modelSwitching,
   onCompact, onAbortCompaction, isCompacting, compactError, compactResult, toolPreset, onToolPresetChange,
@@ -2341,14 +2384,24 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
           {/* spacer */}
           {!isMobile && <div style={{ flex: 1 }} />}
 
-          {/* RIGHT: thinking + tools preset + compact + sound (idle) | Stop + sound (streaming) */}
+          {/* RIGHT: stop (mobile streaming, left of more) | thinking + tools + compact + sound */}
+          <div style={{
+            flex: "0 0 auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 6,
+            marginLeft: isMobile ? 0 : "auto",
+          }}>
+            {isMobile && isStreaming && (
+              <StopAgentButton onAbort={onAbort} title={t("chat.stopAgent")} label={t("chat.stop")} iconOnly />
+            )}
           <div ref={controlsMenuRef} style={{
             flex: "0 0 auto",
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
             position: "relative",
-            marginLeft: isMobile ? 0 : "auto",
           }}>
             {isMobile && (
               <button
@@ -2628,31 +2681,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               </div>
             )}
 
-            {isStreaming && (
-              <button
-                onClick={onAbort}
-                 title={t("chat.stopAgent")}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "8px 14px",
-                  height: 32,
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  borderRadius: 9,
-                  color: "#ef4444",
-                  cursor: "pointer",
-                  fontSize: 12, fontWeight: 600,
-                  whiteSpace: "nowrap", letterSpacing: "-0.01em",
-                  transition: "background 0.12s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.16)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
-              >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <rect x="1.5" y="1.5" width="7" height="7" rx="1.5" fill="currentColor" />
-                </svg>
-                 {t("chat.stop")}
-              </button>
+            {!isMobile && isStreaming && (
+              <StopAgentButton onAbort={onAbort} title={t("chat.stopAgent")} label={t("chat.stop")} />
             )}
 
             {onSoundToggle !== undefined && (
@@ -2740,6 +2770,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               </button>
             )}
             </div>
+          </div>
           </div>
 
         </div>}

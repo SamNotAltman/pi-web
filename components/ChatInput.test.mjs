@@ -741,3 +741,20 @@ test("renders a new-session button after attach when provided", () => {
   const modelAt = html.indexOf("DeepSeek V4 Flash");
   assert.ok(attachAt >= 0 && newAt > attachAt && modelAt > newAt);
 });
+
+test("places the mobile stop control before more controls and outside the overflow menu", () => {
+  const source = readFileSync(new URL("./ChatInput.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("{/* RIGHT:");
+  assert.notEqual(start, -1);
+  const block = source.slice(start, source.indexOf("</fieldset>", start));
+  const mobileStopAt = block.indexOf("{isMobile && isStreaming && (");
+  const moreAt = block.indexOf('t("chat.moreControls")');
+  const overlayAt = block.indexOf('controlsMenuOpen ? "flex" : "none"');
+  const desktopStopAt = block.indexOf("{!isMobile && isStreaming && (");
+  assert.ok(mobileStopAt >= 0);
+  assert.ok(moreAt > mobileStopAt);
+  assert.ok(overlayAt > moreAt);
+  assert.ok(desktopStopAt > overlayAt);
+  assert.match(block.slice(mobileStopAt, moreAt), /iconOnly/);
+  assert.doesNotMatch(block.slice(desktopStopAt, desktopStopAt + 180), /iconOnly/);
+});
