@@ -18,6 +18,8 @@ pm2 restart pi-web
 
 `npm run build` here is required. The “never run `next build` during dev” rule below applies **only** when you yourself started `npm run dev` in this shell and it is still running. It does not apply to the normal PM2 workflow on this machine.
 
+**Rollback is a code change.** `git restore`, `git checkout --`, `git reset --hard`, `git revert`, or discarding uncommitted edits still changes the files PM2 serves. If any restored file is application code (not just docs/tests/comments), run `npm run build` and `pm2 restart pi-web` before you finish. Do not treat a clean working tree as “nothing to deploy.”
+
 ### Local `npm run dev` (only when explicitly iterating that way)
 
 ```bash
