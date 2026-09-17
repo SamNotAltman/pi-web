@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasJsonContentType, isApiRequestAllowed } from "@/lib/request-security";
 import { readPasskeys } from "@/lib/passkey-store";
 import {
+  clearLoginFailures,
+  clientIpFromRequest,
+  isLoginAttemptLimited,
+  loginRateLimitResponseInit,
+  recordLoginFailure,
+} from "@/lib/login-rate-limit";
+import {
   createWebSessionToken,
   isValidWebPassword,
   isValidWebSessionToken,
@@ -33,10 +40,9 @@ export async function GET(request: NextRequest) {
     || isValidWebSessionToken(request.cookies.get(PI_WEB_SESSION_COOKIE)?.value, password);
   return NextResponse.json(
     {
-      enabled,
-      authenticated,
       hasPasskeys: readPasskeys().length > 0,
       showPasswordLogin: isPasswordLoginVisible(),
+      ...(authenticated ? { enabled, authenticated: true } : {}),
     },
     { headers: { "Cache-Control": "no-store" } },
   );
@@ -55,10 +61,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Password authentication is disabled" }, { status: 404 });
   }
 
+  const ip = clientIpFromRequest(request);
+  const limited = isLoginAttemptLimited(ip);
+  if (limited.limited) {
+    return NextResponse.json({ error: "Too many login attempts" }, loginRateLimitResponseInit(limited.retryAfterSec));
+  }
+
   const body = await request.json().catch(() => null) as { password?: unknown; rememberMe?: unknown } | null;
   if (!body || typeof body.password !== "string" || !isValidWebPassword(body.password, password)) {
+    recordLoginFailure(ip);
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
+  clearLoginFailures(ip);
 
   const rememberMe = body.rememberMe === true;
   const response = NextResponse.json({ ok: true });

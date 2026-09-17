@@ -60,4 +60,9 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/", "/login", "/api/:path*"] };
+export const config = {
+  matcher: [
+    "/",
+    "/((?!_next/|favicon.ico|icons/|offline.html|provider-icons.svg|sw.js|manifest.webmanifest).*)",
+  ],
+};

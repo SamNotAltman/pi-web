@@ -3,6 +3,13 @@ import { generateRegistrationOptions } from "@simplewebauthn/server";
 import { hasJsonContentType, isApiRequestAllowed } from "@/lib/request-security";
 import { readPasskeys } from "@/lib/passkey-store";
 import {
+  clearLoginFailures,
+  clientIpFromRequest,
+  isLoginAttemptLimited,
+  loginRateLimitResponseInit,
+  recordLoginFailure,
+} from "@/lib/login-rate-limit";
+import {
   PI_WEB_AUTH_USERNAME,
   PI_WEB_SESSION_COOKIE,
   isValidWebPassword,
@@ -50,8 +57,19 @@ export async function POST(request: NextRequest) {
     request.cookies.get(PI_WEB_SESSION_COOKIE)?.value,
     password,
   );
-  const passwordAuthorized = typeof body?.password === "string"
-    && isValidWebPassword(body.password, password);
+  const suppliedPassword = typeof body?.password === "string" ? body.password : null;
+  const ip = clientIpFromRequest(request);
+  if (!sessionAuthorized && suppliedPassword !== null) {
+    const limited = isLoginAttemptLimited(ip);
+    if (limited.limited) {
+      return NextResponse.json({ error: "Too many login attempts" }, loginRateLimitResponseInit(limited.retryAfterSec));
+    }
+  }
+  const passwordAuthorized = suppliedPassword !== null && isValidWebPassword(suppliedPassword, password);
+  if (!sessionAuthorized && suppliedPassword !== null) {
+    if (passwordAuthorized) clearLoginFailures(ip);
+    else recordLoginFailure(ip);
+  }
   if (!sessionAuthorized && !passwordAuthorized) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }

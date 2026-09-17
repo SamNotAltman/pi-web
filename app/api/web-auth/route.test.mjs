@@ -46,6 +46,15 @@ function request(method, body, headers = {}) {
   });
 }
 
+test("does not advertise password authentication to anonymous clients", async () => {
+  const response = await GET(request("GET"));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    hasPasskeys: false,
+    showPasswordLogin: false,
+  });
+});
+
 test("logs in with one password and reports the signed session", async () => {
   let response = await POST(request("POST", { password: "wrong" }));
   assert.equal(response.status, 401);
@@ -64,7 +73,7 @@ test("logs in with one password and reports the signed session", async () => {
   response = await GET(request("GET", undefined, { Cookie: cookiePair }));
   assert.deepEqual(
     await response.json(),
-    { enabled: true, authenticated: true, hasPasskeys: false, showPasswordLogin: false },
+    { hasPasskeys: false, showPasswordLogin: false, enabled: true, authenticated: true },
   );
 });
 
@@ -115,4 +124,23 @@ test("rejects cross-origin login attempts", async () => {
     { Origin: "https://attacker.example", "Sec-Fetch-Site": "cross-site" },
   ));
   assert.equal(response.status, 403);
+});
+
+test("rate-limits repeated password failures from the same client", async () => {
+  const ip = "203.0.113.77";
+  for (let i = 0; i < 10; i += 1) {
+    const response = await POST(request("POST", { password: "wrong" }, { "CF-Connecting-IP": ip }));
+    assert.equal(response.status, 401);
+  }
+  const limited = await POST(request("POST", { password: "wrong" }, { "CF-Connecting-IP": ip }));
+  assert.equal(limited.status, 429);
+  assert.match(limited.headers.get("retry-after") ?? "", /^[1-9]/);
+  assert.equal((await limited.json()).error, "Too many login attempts");
+
+  const evenCorrect = await POST(request(
+    "POST",
+    { password: "correct horse battery staple" },
+    { "CF-Connecting-IP": ip },
+  ));
+  assert.equal(evenCorrect.status, 429);
 });

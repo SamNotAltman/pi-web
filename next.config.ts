@@ -11,7 +11,20 @@ try {
   piVersion = (JSON.parse(readFileSync(piPkgPath, "utf8")) as { version: string }).version;
 } catch { /* package not found, use default */ }
 
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  {
+    key: "Content-Security-Policy",
+    value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+  },
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   outputFileTracingRoot: configDir,
   serverExternalPackages: [
     "node-pty",
@@ -50,21 +63,36 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/:path*",
+        headers: securityHeaders,
+      },
+      {
         source: "/",
         headers: [
+          ...securityHeaders,
+          { key: "Cache-Control", value: "private, no-cache, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/login",
+        headers: [
+          ...securityHeaders,
           { key: "Cache-Control", value: "private, no-cache, max-age=0, must-revalidate" },
         ],
       },
       {
         source: "/sw.js",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+          ...securityHeaders,
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate, s-maxage=0" },
+          { key: "CDN-Cache-Control", value: "no-store" },
           { key: "Service-Worker-Allowed", value: "/" },
         ],
       },
       {
         source: "/manifest.webmanifest",
         headers: [
+          ...securityHeaders,
           { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
         ],
       },
