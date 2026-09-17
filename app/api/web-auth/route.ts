@@ -1,37 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasJsonContentType, isApiRequestAllowed } from "@/lib/request-security";
+import { readPasskeys } from "@/lib/passkey-store";
 import {
   createWebSessionToken,
   isValidWebPassword,
   isValidWebSessionToken,
+  isPasswordLoginVisible,
   isWebPasswordEnabled,
   PI_WEB_SESSION_COOKIE,
   PI_WEB_SESSION_MAX_AGE,
+  webSessionCookieOptions,
 } from "@/lib/web-auth";
 
 export const dynamic = "force-dynamic";
 
-function isSecureRequest(request: Request): boolean {
-  return new URL(request.url).protocol === "https:"
-    || request.headers.get("x-forwarded-proto")?.split(",", 1)[0]?.trim() === "https";
-}
-
-function sessionCookieOptions(request: Request) {
-  return {
-    name: PI_WEB_SESSION_COOKIE,
-    httpOnly: true as const,
-    // Lax is sent on top-level navigations after a browser restart, bookmark,
-    // or dock/home-screen launch. Strict is omitted in those cases and looks
-    // like Remember me failed. API CSRF is enforced separately by Origin checks.
-    sameSite: "lax" as const,
-    secure: isSecureRequest(request),
-    path: "/",
-  };
-}
-
 function clearSessionCookie(response: NextResponse, request: Request): void {
   response.cookies.set({
-    ...sessionCookieOptions(request),
+    ...webSessionCookieOptions(request),
     value: "",
     maxAge: 0,
   });
@@ -47,7 +32,12 @@ export async function GET(request: NextRequest) {
   const authenticated = !enabled
     || isValidWebSessionToken(request.cookies.get(PI_WEB_SESSION_COOKIE)?.value, password);
   return NextResponse.json(
-    { enabled, authenticated },
+    {
+      enabled,
+      authenticated,
+      hasPasskeys: readPasskeys().length > 0,
+      showPasswordLogin: isPasswordLoginVisible(),
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
@@ -73,7 +63,7 @@ export async function POST(request: NextRequest) {
   const rememberMe = body.rememberMe === true;
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
-    ...sessionCookieOptions(request),
+    ...webSessionCookieOptions(request),
     value: createWebSessionToken(password),
     ...(rememberMe
       ? {

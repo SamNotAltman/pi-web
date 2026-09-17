@@ -4,6 +4,27 @@ export const PI_WEB_AUTH_USERNAME = "pi";
 export const PI_WEB_SESSION_COOKIE = "pi_web_session";
 export const PI_WEB_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
+export function isSecureRequest(request: Request): boolean {
+  return new URL(request.url).protocol === "https:"
+    || request.headers.get("x-forwarded-proto")?.split(",", 1)[0]?.trim() === "https";
+}
+
+/**
+ * Cookie attributes shared by every session-issuing route. Lax is sent on
+ * top-level navigations after a browser restart, bookmark, or dock/home-screen
+ * launch; Strict is omitted in those cases and looks like Remember me failed.
+ * API CSRF is enforced separately by Origin checks.
+ */
+export function webSessionCookieOptions(request: Request) {
+  return {
+    name: PI_WEB_SESSION_COOKIE,
+    httpOnly: true as const,
+    sameSite: "lax" as const,
+    secure: isSecureRequest(request),
+    path: "/",
+  };
+}
+
 function hashSecret(value: string): Buffer {
   return createHash("sha256").update(value, "utf8").digest();
 }
@@ -16,6 +37,17 @@ export function isWebPasswordEnabled(
   password: string | undefined = process.env.PI_WEB_PASSWORD,
 ): password is string {
   return typeof password === "string" && password.length > 0;
+}
+
+/**
+ * Whether the login page offers "Use password instead" once a passkey is
+ * available. Hidden by default so passkey users never leave the passkey flow
+ * unless the operator opts in.
+ */
+export function isPasswordLoginVisible(
+  value: string | undefined = process.env.PI_WEB_SHOW_PASSWORD_LOGIN,
+): boolean {
+  return typeof value === "string" && /^(1|true|yes)$/i.test(value.trim());
 }
 
 export function isValidWebPassword(

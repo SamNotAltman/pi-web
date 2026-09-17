@@ -31,6 +31,7 @@ import { AgentsConfig } from "./AgentsConfig";
 import { PluginsConfig } from "./PluginsConfig";
 import { ConfigButton, ConfigSwitch } from "./SettingsUi";
 import { WebAuthLogoutButton } from "./WebAuthLogoutButton";
+import { PasskeySettings } from "./PasskeySettings";
 
 interface Props {
   cwd: string | null;
@@ -314,6 +315,8 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
           })}
         </div>
       </section>
+
+      <PasskeySettings />
 
       <WebAuthLogoutButton variant="settings" />
     </div>

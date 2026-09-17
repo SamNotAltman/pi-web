@@ -40,6 +40,7 @@ pi 的资源加载器在同目录发现 AGENTS.override.md 时会加载它并【
 - **插件/技能**：`/api/plugins`（Pi `SettingsManager` + `DefaultPackageManager`；禁用 = 写空 `extensions/skills/prompts/themes`），`/api/skills`（`DefaultResourceLoader`；只切 `disable-model-invocation`）。安装：`npx skills add … --agent pi`。
 - **子代理**：`builtInEnabled` 在 `~/.pi/agent/agents/settings.json`，默认 false，格式错按 false，切换后需重载会话。Profile 文件与其他 runtime 共用：托管键仅 `description`、`display_name`、`tools`、`load_skills`、`load_extensions`、`enabled`、`inherit_context`、`run_in_background`、`model`、`thinking`、`max_turns`，其余原样回写，手写白名单（如 `extensions: pi-advisor-flow`）绝不改写。见 ADR 0003。
 - **认证**：provider 列表按 capability 生成（`lib/provider-listing.ts`），不按 id，双认证 provider 只能出现一次；任何 auth 变更后两张列表都要刷新；`auth.json` 每 provider 一条，删除走 `removeStoredCredentialIfType()` 并在 Pi 文件锁内；状态接口绝不返回明文 key。测试路由是 `app/api/models-config/test/route.ts`。
+- **Web 登录 / Passkey**：`PI_WEB_PASSWORD` 同时是 passkey 注册/恢复密钥和会话 HMAC 密钥 —— 改密码会让 session/challenge cookie 失效，但不会让已注册 passkey 失效（断言用存储的 COSE 公钥校验）。验证走 `@simplewebauthn/server`，挑战放在签名 cookie 里（无服务端状态），凭据存 `~/.pi/agent/pi-web-passkeys.json`。注册与断言都必须传 `requireUserVerification: false` 以匹配 options 的 `"preferred"`，否则只用 UP 的安全密钥会全部失败。`proxy.ts` 放行整个 `/api/web-auth/*`，管理路由自己校验会话。Passkey 绑定注册时的 Host；`http://` 局域网地址拿不到安全上下文，密码登录保留为回退。见 ADR 0004。
 - **提示音/导出**：`hooks/useAudio.ts`（`pi-sound-enabled`、单个 `AudioContext`、需用户手势解锁、在 `onAgentEnd` 播放）；导出把 Pi 的递归树助手改成迭代版。
 
 ## Pi 会话文件格式

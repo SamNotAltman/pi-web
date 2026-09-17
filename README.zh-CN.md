@@ -49,7 +49,8 @@ pi-web
 | `--hostname <主机>`、`-H <主机>` 或 `PI_WEB_HOSTNAME` | 监听主机名 | `127.0.0.1` |
 | `--no-open` 或 `PI_WEB_NO_OPEN=1` | 不自动打开浏览器 | 自动打开 |
 | `PI_WEB_ALLOWED_HOSTS` | 额外允许的代理或自定义主机名，多个值用逗号分隔，必须精确匹配 | 未设置 |
-| `PI_WEB_PASSWORD` | 启用密码登录页 | 不启用认证 |
+| `PI_WEB_PASSWORD` | 启用登录页与 Passkey 注册 | 不启用认证 |
+| `PI_WEB_SHOW_PASSWORD_LOGIN` | 在 Passkey 登录页显示“改用密码登录”按钮 | 隐藏 |
 
 例如：
 
@@ -67,6 +68,16 @@ PI_WEB_PASSWORD='足够长的随机密码' pi-web --hostname 0.0.0.0
 ```
 
 密码认证不会加密连接。不要通过明文 HTTP 将 Pi Web 暴露到互联网；远程访问应使用可信反向代理提供 HTTPS，或通过可信 VPN。如果反向代理传递外部主机名，请把该名称精确加入 `PI_WEB_ALLOWED_HOSTS`。这个白名单不会改变 Pi Web 的监听地址。
+
+### Passkey
+
+设置 `PI_WEB_PASSWORD` 后，你可以注册 Passkey，用设备的指纹、面容或安全密钥代替密码登录。密码仅保留为首次注册与找回的后备凭据：
+
+1. 先用密码登录一次。
+2. 打开“设置 → Passkeys”，点击 **添加 Passkey**。
+3. 之后的访问以 **使用 Passkey 登录** 为主，密码仍作为备用方式保留。
+
+Passkey 依赖 WebAuthn API，浏览器只在安全上下文中提供它。`http://localhost` 与 `http://127.0.0.1` 属于安全上下文，普通 HTTP 局域网地址则不是：通过 `http://192.168.x.x` 访问时登录页会隐藏 Passkey 按钮，密码登录照常可用。需要远程使用 Passkey 时，请在反向代理处终止 HTTPS，并把外部主机名加入 `PI_WEB_ALLOWED_HOSTS`。凭据保存在 `~/.pi/agent/pi-web-passkeys.json`，且与注册时使用的主机名绑定，因此为某个主机名注册的 Passkey 无法用于另一个主机名。
 
 ### HTTP 代理
 

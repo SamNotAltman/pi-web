@@ -323,6 +323,43 @@ html.dark .web-login-error {
   color: #f87171;
 }
 
+.web-login-alt {
+  display: block;
+  width: fit-content;
+  margin: 12px 4px 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+}
+
+.web-login-alt:not(:disabled):hover {
+  text-decoration: underline;
+}
+
+.web-login-alt:disabled {
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+.web-login-hint {
+  margin: 12px 4px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.web-login-passkey-button {
+  flex: 1;
+  justify-content: center;
+  min-height: 34px;
+}
+
 .web-login-form button {
   display: flex;
   flex-shrink: 0;

@@ -48,7 +48,8 @@ For port and hostname, command-line options override the corresponding environme
 | `--no-open` or `PI_WEB_NO_OPEN=1` | Do not open a browser automatically | Browser opens |
 | `PI_WEB_SKIP_VERSION_CHECK=1` | Disable Pi Web update checks | Unset |
 | `PI_WEB_ALLOWED_HOSTS` | Additional exact proxy or custom hostnames, comma-separated | Unset |
-| `PI_WEB_PASSWORD` | Enable the password login page | Authentication disabled |
+| `PI_WEB_PASSWORD` | Enable login and passkey enrollment | Authentication disabled |
+| `PI_WEB_SHOW_PASSWORD_LOGIN` | Show the "Use password instead" button on the passkey login screen | Hidden |
 | `PI_WEB_IDLE_TIMEOUT_MS` | Session idle timeout in milliseconds, up to `2147483647`; `0` disables idle shutdown; invalid or out-of-range values use the default | `600000` (10 min) |
 
 For example:
@@ -67,6 +68,16 @@ PI_WEB_PASSWORD='a-long-random-password' pi-web --hostname 0.0.0.0
 ```
 
 Password authentication does not encrypt the connection. Do not expose Pi Web over plain HTTP to the internet; use HTTPS through a trusted reverse proxy or a trusted VPN. If a reverse proxy sends an external hostname, add that exact name to `PI_WEB_ALLOWED_HOSTS`. This allow-list does not change the address Pi Web binds to.
+
+### Passkeys
+
+With `PI_WEB_PASSWORD` set you can register a passkey and sign in with the device's fingerprint, face, or security key instead of typing the password. The password stays as the bootstrap and recovery secret:
+
+1. Sign in once with the password.
+2. Open Settings → Passkeys and choose **Add passkey**.
+3. Later visits lead with **Sign in with passkey**; the password stays available as a fallback.
+
+Passkeys use the WebAuthn API, which browsers only expose in a secure context. `http://localhost` and `http://127.0.0.1` count as secure, a plain-HTTP LAN address does not: over `http://192.168.x.x` the login page hides the passkey button and the password keeps working. For remote passkeys, terminate HTTPS in the proxy and add the external hostname to `PI_WEB_ALLOWED_HOSTS`. Credentials live in `~/.pi/agent/pi-web-passkeys.json` and are scoped to the hostname they were registered on, so a passkey for one hostname does not work on another.
 
 ### HTTP Proxy
 

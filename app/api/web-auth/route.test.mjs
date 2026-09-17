@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
 import test, { after, before } from "node:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createJiti } from "jiti";
 import { NextRequest } from "next/server.js";
 
 const originalPassword = process.env.PI_WEB_PASSWORD;
+const originalShowPasswordLogin = process.env.PI_WEB_SHOW_PASSWORD_LOGIN;
+const originalAgentDir = process.env.PI_CODING_AGENT_DIR;
+const agentDir = mkdtempSync(join(tmpdir(), "pi-web-auth-route-"));
 const jiti = createJiti(import.meta.url, {
   alias: { "@": process.cwd() },
   interopDefault: true,
@@ -11,10 +17,19 @@ const jiti = createJiti(import.meta.url, {
 });
 const { GET, POST, DELETE } = await jiti.import("./route.ts");
 
-before(() => { process.env.PI_WEB_PASSWORD = "correct horse battery staple"; });
+before(() => {
+  process.env.PI_WEB_PASSWORD = "correct horse battery staple";
+  delete process.env.PI_WEB_SHOW_PASSWORD_LOGIN;
+  process.env.PI_CODING_AGENT_DIR = agentDir;
+});
 after(() => {
   if (originalPassword === undefined) delete process.env.PI_WEB_PASSWORD;
   else process.env.PI_WEB_PASSWORD = originalPassword;
+  if (originalShowPasswordLogin === undefined) delete process.env.PI_WEB_SHOW_PASSWORD_LOGIN;
+  else process.env.PI_WEB_SHOW_PASSWORD_LOGIN = originalShowPasswordLogin;
+  if (originalAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
+  else process.env.PI_CODING_AGENT_DIR = originalAgentDir;
+  rmSync(agentDir, { recursive: true, force: true });
 });
 
 function request(method, body, headers = {}) {
@@ -47,7 +62,10 @@ test("logs in with one password and reports the signed session", async () => {
 
   const cookiePair = cookie.split(";", 1)[0];
   response = await GET(request("GET", undefined, { Cookie: cookiePair }));
-  assert.deepEqual(await response.json(), { enabled: true, authenticated: true });
+  assert.deepEqual(
+    await response.json(),
+    { enabled: true, authenticated: true, hasPasskeys: false, showPasswordLogin: false },
+  );
 });
 
 test("remember-me login persists the session cookie", async () => {
@@ -70,6 +88,17 @@ test("non-boolean rememberMe values do not persist the session cookie", async ()
   }));
   assert.equal(response.status, 200);
   assert.doesNotMatch(response.headers.get("set-cookie"), /Max-Age=/i);
+});
+
+test("reports the password fallback button visibility from the environment", async () => {
+  process.env.PI_WEB_SHOW_PASSWORD_LOGIN = "1";
+  try {
+    const response = await GET(request("GET"));
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).showPasswordLogin, true);
+  } finally {
+    delete process.env.PI_WEB_SHOW_PASSWORD_LOGIN;
+  }
 });
 
 test("logout clears the session cookie", async () => {
