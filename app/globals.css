@@ -252,6 +252,11 @@ body {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent), 0 8px 24px -12px rgba(15, 23, 42, 0.10);
 }
 
+.web-login-composer-pending {
+  min-height: 52px;
+  pointer-events: none;
+}
+
 .web-login-label {
   position: absolute;
   width: 1px;

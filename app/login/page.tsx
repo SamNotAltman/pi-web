@@ -133,7 +133,11 @@ function LoginForm() {
           </div>
         </header>
 
-        {showPasskeyMode ? (
+        {!loaded ? (
+          <div className="web-login-form" aria-busy="true">
+            <div className="web-login-composer web-login-composer-pending" />
+          </div>
+        ) : showPasskeyMode ? (
           <div className="web-login-form">
             <div className="web-login-composer">
               <button type="button" className="web-login-passkey-button" onClick={() => void loginWithPasskey()} disabled={busy}>

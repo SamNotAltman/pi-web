@@ -149,6 +149,8 @@ test("keeps password authentication to one login field and logout actions", () =
   assert.match(sidebarSource, /<WebAuthLogoutButton variant="toolbar"/);
   assert.doesNotMatch(panelSource, /\/api\/web-auth/);
   assert.doesNotMatch(sidebarSource, /\/api\/web-auth/);
+  assert.match(loginSource, /!loaded \? \(/);
+  assert.match(loginSource, /web-login-composer-pending/);
   assert.match(loginSource, /className="web-login-composer"[\s\S]*?type="password"[\s\S]*?<button type="submit"/);
   assert.match(loginSource, /FormData\(event\.currentTarget\)\.get\("rememberMe"\) === "true"/);
   assert.match(loginSource, /JSON\.stringify\(\{ password, rememberMe \}\)/);
