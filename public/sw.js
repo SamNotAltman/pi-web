@@ -1,5 +1,8 @@
 const CACHE_PREFIX = "pi-web";
-const CACHE_VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
+// Bump this when precached assets change so installed PWAs do not retain an
+// older icon under the same application version.
+const STATIC_ASSET_REVISION = "pi-icon-2";
+const CACHE_VERSION = `${new URL(self.location.href).searchParams.get("v") || "dev"}-${STATIC_ASSET_REVISION}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE_URLS = [
