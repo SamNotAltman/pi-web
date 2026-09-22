@@ -410,6 +410,9 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
   const [fileSearchOpen, setFileSearchOpen] = useState(false);
   const [sessionSearchOpen, setSessionSearchOpen] = useState(false);
   const [sessionSearchQuery, setSessionSearchQuery] = useState("");
+  const [webAuthEnabled, setWebAuthEnabled] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
   const sessionSearchActive = sessionSearchOpen && Boolean(sessionSearchQuery.trim());
   const [changesCount, setChangesCount] = useState(0);
   const [changesCollapsed, setChangesCollapsed] = useState(true);
@@ -983,6 +986,27 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
     onNewSession?.(tempId, selectedCwd);
   }, [selectedCwd, onNewSession]);
 
+  useEffect(() => {
+    void fetch("/api/web-auth")
+      .then((response) => response.ok ? response.json() : null)
+      .then((data: { enabled?: boolean } | null) => setWebAuthEnabled(data?.enabled === true))
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
+    setLogoutError("");
+    try {
+      const response = await fetch("/api/web-auth", { method: "DELETE" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      window.location.replace("/login");
+    } catch {
+      setLogoutError(t("auth.logoutFailed"));
+    } finally {
+      setLoggingOut(false);
+    }
+  }, [t]);
+
   const recentProjects = getRecentProjects(allSessions);
   const showProjectFilter = recentProjects.length > 8;
   const visibleProjects = projectFilter.trim()
@@ -1084,6 +1108,48 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
           <PiWebTitle />
           <div style={{ display: "flex", gap: 6 }}>
+            {webAuthEnabled && (
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={loggingOut}
+                title={loggingOut ? t("auth.loggingOut") : t("auth.logOut")}
+                aria-label={loggingOut ? t("auth.loggingOut") : t("auth.logOut")}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  background: "var(--bg-hover)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-muted)",
+                  cursor: loggingOut ? "default" : "pointer",
+                  height: 32,
+                  paddingLeft: 9,
+                  paddingRight: 10,
+                  borderRadius: 7,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: "-0.01em",
+                  flexShrink: 0,
+                  opacity: loggingOut ? 0.6 : 1,
+                  transition: "background 0.12s, color 0.12s, border-color 0.12s",
+                }}
+                onMouseEnter={(e) => {
+                  if (loggingOut) return;
+                  e.currentTarget.style.background = "var(--bg-selected)";
+                  e.currentTarget.style.color = "var(--accent)";
+                  e.currentTarget.style.borderColor = "rgba(37,99,235,0.35)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--bg-hover)";
+                  e.currentTarget.style.color = "var(--text-muted)";
+                  e.currentTarget.style.borderColor = "var(--border)";
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                </svg>
+                {t("auth.logOut")}
+              </button>
+            )}
             <button
               onClick={handleNewSession}
               disabled={!selectedCwd}
@@ -1140,6 +1206,11 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
             </button>
           </div>
         </div>
+        {logoutError && (
+          <p role="alert" style={{ margin: "-4px 0 8px", color: "var(--danger, #dc2626)", fontSize: 11 }}>
+            {logoutError}
+          </p>
+        )}
 
         {/* CWD picker */}
         <div ref={dropdownRef} style={{ position: "relative" }}>
