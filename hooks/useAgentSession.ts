@@ -22,6 +22,7 @@ import type { SessionStatsInfo } from "@/lib/pi-types";
 import { mergeSessionStats, type SessionFileStats } from "@/lib/session-stats";
 import { userMessageKey } from "@/lib/prompt-recovery";
 import { AgentEventConnection } from "@/lib/agent-event-connection";
+import { isSystemMessageEvent } from "@/lib/agent-event-wire";
 import { getToolExecutionProgress } from "@/lib/tool-execution-progress";
 import { updateExtensionWidgets } from "@/lib/extension-widgets";
 import {
@@ -773,6 +774,12 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
   useEffect(() => {
     const sid = session?.id;
     if (!sid) return;
+    // React Strict Mode re-runs every effect after a simulated unmount, in
+    // declaration order. The mount-only effect below flips this ref to false
+    // in its cleanup and only restores it when it re-runs *after* this one,
+    // so without re-asserting it here shouldMaintain() refuses the connection
+    // and the selected session never opens its event stream.
+    sessionHookMountedRef.current = true;
     maintainEventsConnected(sid);
     return () => {
       if (sessionIdRef.current === sid) eventConnectionRef.current?.close();
@@ -1242,6 +1249,9 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
         // (e.g. SSE data buffered while the tab was frozen, flushed after
         // reconcile) — they would resurrect a ghost streaming bubble.
         if (!agentRunningRef.current) break;
+        // Transcript system messages (prompt and tool loadout) are filtered
+        // server-side; keep them out of the chat should one arrive.
+        if (isSystemMessageEvent(event)) break;
         if (event.type === "message_start") {
           const msg = event.message as AgentMessage | undefined;
           if (msg?.role === "user") break;
@@ -1277,6 +1287,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
         // loadSession already loaded this message from the session file —
         // appending it again would duplicate it.
         if (!agentRunningRef.current) break;
+        if (isSystemMessageEvent(event)) break;
         const completed = event.message as AgentMessage | undefined;
         if (completed && completed.role === "user") {
           // Delivered steering/follow-up messages surface here as user
