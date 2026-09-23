@@ -2352,13 +2352,50 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
           {!isMobile && <div style={{ flex: 1 }} />}
 
           {/* RIGHT: thinking + tools preset + compact + sound (idle) | Stop + sound (streaming) */}
-          <div ref={controlsMenuRef} style={{
+          <div style={{
             flex: "0 0 auto",
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
-            position: "relative",
             marginLeft: isMobile ? 0 : "auto",
+            gap: isMobile ? 2 : 0,
+          }}>
+          {isMobile && isStreaming && (
+            <button
+              type="button"
+              onClick={onAbort}
+              title={t("chat.stopAgent")}
+              aria-label={t("chat.stopAgent")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 26,
+                height: 26,
+                padding: 0,
+                flexShrink: 0,
+                position: "relative",
+                zIndex: 70,
+                background: "color-mix(in srgb, #ef4444 14%, var(--bg))",
+                border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: 7,
+                color: "#ef4444",
+                cursor: "pointer",
+                transition: "background 0.12s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "color-mix(in srgb, #ef4444 24%, var(--bg))"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "color-mix(in srgb, #ef4444 14%, var(--bg))"; }}
+            >
+              <svg width="7" height="7" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                <rect x="1.5" y="1.5" width="7" height="7" rx="1.5" fill="currentColor" />
+              </svg>
+            </button>
+          )}
+          <div ref={controlsMenuRef} style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            position: "relative",
           }}>
             {isMobile && (
               <button
@@ -2650,7 +2687,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               </div>
             )}
 
-            {isStreaming && (
+            {isStreaming && !isMobile && (
               <button
                 onClick={onAbort}
                  title={t("chat.stopAgent")}
@@ -2762,6 +2799,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
               </button>
             )}
             </div>
+          </div>
           </div>
 
         </div>}
