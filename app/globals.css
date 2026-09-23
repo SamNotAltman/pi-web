@@ -1922,4 +1922,29 @@ span.token.table {
   .chat-input-textarea {
     font-size: max(16px, var(--chat-content-font-size, 14px)) !important;
   }
+
+  /* Thumb reach: a slim left-edge tab, just below center. The ::after grows the hit area without a bigger visual. */
+  .mobile-sidebar-toggle {
+    position: fixed !important;
+    left: env(safe-area-inset-left) !important;
+    top: 62% !important;
+    z-index: 180;
+    width: 22px !important;
+    height: 36px !important;
+    border: 1px solid var(--border) !important;
+    border-left: none !important;
+    border-radius: 0 10px 10px 0 !important;
+    background: color-mix(in srgb, var(--bg-panel) 88%, transparent) !important;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.08);
+    transform: translateY(-50%);
+  }
+  .mobile-sidebar-toggle svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .mobile-sidebar-toggle::after {
+    content: "";
+    position: absolute;
+    inset: -6px -10px -6px 0;
+  }
 }
