@@ -8,7 +8,16 @@ npm run dev   # port 30141
 
 Typecheck: `node_modules/.bin/tsc --noEmit`  
 Lint: `npm run lint`  
-**Never run `next build` during dev** — pollutes `.next/` and breaks `npm run dev`.
+**Never run `next build` during dev** — pollutes `.next/` and breaks `npm run dev`. This does not apply to the required production rebuild below.
+
+### After source changes
+
+Whenever source is modified — including reverting or rolling back changes — rebuild and restart the pm2 process before considering the task done:
+
+```bash
+npm run build
+pm2 restart sam-pi-web
+```
 
 ### Dev server troubleshooting
 
