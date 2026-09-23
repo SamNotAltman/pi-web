@@ -791,6 +791,15 @@ export function AppShell() {
     router.replace(`?cwd=${encodeURIComponent(cwd)}`, { scroll: false });
   }, [invalidateWorkspaceRestore, router, isMobile]);
 
+  const handleMobileNewSession = useCallback(() => {
+    const cwd = selectedSession?.cwd ?? newSessionCwd ?? activeCwd;
+    if (!cwd) return;
+    const id = typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    handleNewSession(id, cwd);
+  }, [activeCwd, handleNewSession, newSessionCwd, selectedSession]);
+
   // Global keyboard shortcuts (handles Esc, Ctrl+Alt+N etc.)
   useGlobalKeyboardShortcuts({
     onNewSession: (cwd: string) => handleNewSession(`kb-${Date.now()}`, cwd),
@@ -2297,6 +2306,7 @@ export function AppShell() {
               onAgentEnd={handleAgentEnd}
               onAttentionNeeded={handleAttentionNeeded}
               onSessionCreated={handleSessionCreated}
+              onNewSession={handleMobileNewSession}
               onSessionForked={handleSessionForked}
               modelsRefreshKey={modelsRefreshKey}
               chatInputRef={chatInputRef}
