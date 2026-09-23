@@ -2306,7 +2306,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput({
                 <polyline points="21 15 16 10 5 21" />
               </svg>
             </button>
-            {isMobile && onNewSession && (
+            {onNewSession && (
               <button
                 type="button"
                 onClick={onNewSession}
