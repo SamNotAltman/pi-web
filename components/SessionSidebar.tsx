@@ -73,6 +73,7 @@ import { focusIfLost, type FocusDocument } from "@/lib/stacked-dialog";
 import { useFilesPlacement } from "@/hooks/useFilesPlacement";
 import { useI18n } from "@/hooks/useI18n";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useWebLogout } from "@/hooks/useWebLogout";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import { useScrollbarVisibility } from "@/hooks/useScrollbarVisibility";
 import { useSessionUiState } from "@/hooks/useSessionUiState";
@@ -97,6 +98,7 @@ import {
   FolderIcon,
   MessageIcon,
   ForkIcon,
+  LogOutIcon,
   OpenInNewTabIcon,
   PencilIcon,
   PinIcon,
@@ -479,6 +481,7 @@ function buttonAnchor(element: HTMLElement, align: "start" | "end"): SidebarMenu
 export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSession, controlRef, onNewSessionContextChange, initialSessionId, initialSessionLinked, skipInitialProjectSelection, onInitialRestoreDone, refreshKey, onSessionDeleted, selectedCwd: selectedCwdProp, onCwdChange, onOpenFile, onOpenTerminal, explorerRefreshKey, onExplorerRefresh, onAtMention, onAtMentions, onBackgroundTaskDone, onRunningSessionIdsChange, onSessionsChange }: Props) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
+  const { enabled: webAuthEnabled, loggingOut, logOut } = useWebLogout();
   const [allSessions, setAllSessions] = useState<SessionInfo[]>([]);
   // Tracked in a ref only: the version is compared against the polled value to
   // decide whether the list needs reloading, and no render reads it.
@@ -2414,9 +2417,13 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
   // What the toolbar row's widths depend on: New's label, and the tabs (the
   // chosen tab's label is bolder, the files tab carries the count). The
   // brand's text reports its own changes (fitHeader).
+  // Desktop only, and only once the password is known to be on: a phone
+  // keeps Log out in Settings, and the cell is absent until that read, so
+  // the row's first paint is the two cells the 180px brand fit assumes.
+  const showLogOut = !isMobile && webAuthEnabled;
   const fitHeader = useHeaderFit(headerRef, (stacked
-    ? ["below", t("sidebar.new")]
-    : ["tabs", t("sidebar.tabSessions"), t("sidebar.tabFiles"), t("sidebar.new"), explorerCwd && changesCount > 0 ? changesCount : "", sidebarTab]
+    ? ["below", t("sidebar.new"), showLogOut ? "logout" : ""]
+    : ["tabs", t("sidebar.tabSessions"), t("sidebar.tabFiles"), t("sidebar.new"), explorerCwd && changesCount > 0 ? changesCount : "", sidebarTab, showLogOut ? "logout" : ""]
   ).join("\n"));
   const archivedCount = model.archivedCount;
 
@@ -2551,7 +2558,8 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
           search of the tab in view. Only the two tabs are the tablist. With
           the files below the sessions there is nothing to choose: the brand
           stands there (the panel's anchor, the versions on a click), and
-          the search is the sessions'. */}
+          the search is the sessions'. A desktop with the browser password
+          on adds Log out, icon only, immediately before New. */}
       <div ref={headerRef} className="sidebar-header">
         {stacked && <PiWebTitle onWidthChange={fitHeader} />}
         {!stacked && (
@@ -2591,6 +2599,23 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
           </div>
         )}
         <span className="sidebar-header-spacer" />
+        {showLogOut && (
+          <button
+            type="button"
+            className="sidebar-logout-button"
+            disabled={loggingOut}
+            aria-busy={loggingOut || undefined}
+            title={loggingOut ? t("auth.loggingOut") : t("auth.logOut")}
+            aria-label={loggingOut ? t("auth.loggingOut") : t("auth.logOut")}
+            onClick={() => {
+              void logOut().then((ok) => {
+                if (!ok) showToast(t("auth.logoutFailed"));
+              });
+            }}
+          >
+            <LogOutIcon size={15} />
+          </button>
+        )}
         <button
           type="button"
           className="sidebar-new-button"

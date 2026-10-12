@@ -38,6 +38,17 @@ export function PlusIcon(props: SidebarIconProps) {
   return <SidebarIcon {...props}><path d="M12 5v14M5 12h14" /></SidebarIcon>;
 }
 
+/** Leaving the browser session: the toolbar's Log out, when the password is on. */
+export function LogOutIcon(props: SidebarIconProps) {
+  return (
+    <SidebarIcon {...props}>
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+    </SidebarIcon>
+  );
+}
+
 /** Horizontal dots: the "⋯" of a row or group. */
 export function MoreIcon(props: SidebarIconProps) {
   return (

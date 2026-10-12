@@ -16,6 +16,8 @@ import {
 } from "@/hooks/useChatAppearance";
 import { useEnterSendMode, setEnterSendMode } from "@/hooks/useEnterSendMode";
 import { useFilesPlacement, setFilesPlacement } from "@/hooks/useFilesPlacement";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useWebLogout } from "@/hooks/useWebLogout";
 import { sendAgentCommand } from "@/lib/agent-client";
 import type { ProjectTrustStatus, ToolSettingsResponse } from "@/lib/api-types";
 import {
@@ -36,6 +38,7 @@ import { PluginsConfig } from "./PluginsConfig";
 import { McpConfig } from "./McpConfig";
 import { ConfigButton, ConfigSwitch } from "./SettingsUi";
 import { FontSettings } from "./FontSettings";
+import { LogOutIcon } from "./SidebarIcons";
 
 interface Props {
   cwd: string | null;
@@ -81,37 +84,18 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
   const { width: chatContentWidth, setWidth: setChatContentWidth, fontSize, setFontSize } = useChatAppearance();
   const enterSendMode = useEnterSendMode();
   const filesPlacement = useFilesPlacement();
+  const isMobile = useIsMobile();
+  const { enabled: webAuthEnabled, loggingOut, error: logoutError, logOut } = useWebLogout();
   const [shellSettings, setShellSettings] = useState<ToolSettingsResponse | null>(null);
   const [shellSaving, setShellSaving] = useState(false);
   const [shellError, setShellError] = useState<string | null>(null);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [pushRegistering, setPushRegistering] = useState(false);
   const [pushStatus, setPushStatus] = useState<{ kind: "ok" | "error"; message: string } | null>(null);
-  const [webAuthEnabled, setWebAuthEnabled] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState("");
 
   useEffect(() => {
     setThinkingExpanded(isThinkingExpandedByDefault());
-    void fetch("/api/web-auth")
-      .then((response) => response.ok ? response.json() : null)
-      .then((data: { enabled?: boolean } | null) => setWebAuthEnabled(data?.enabled === true))
-      .catch(() => {});
   }, []);
-
-  const logOut = async () => {
-    setLoggingOut(true);
-    setLogoutError("");
-    try {
-      const response = await fetch("/api/web-auth", { method: "DELETE" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      window.location.replace("/login");
-    } catch {
-      setLogoutError(t("auth.logoutFailed"));
-    } finally {
-      setLoggingOut(false);
-    }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -422,15 +406,13 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
         </div>
       </section>
 
-      {webAuthEnabled && (
+      {isMobile && webAuthEnabled && (
         <section className="settings-general-section">
           <ConfigButton variant="secondary" disabled={loggingOut} onClick={() => void logOut()}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M10 17l5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-            </svg>
+            <LogOutIcon size={14} />
             {loggingOut ? t("auth.loggingOut") : t("auth.logOut")}
           </ConfigButton>
-          {logoutError && <p role="alert" className="settings-general-error">{logoutError}</p>}
+          {logoutError && <p role="alert" className="settings-general-error">{t("auth.logoutFailed")}</p>}
         </section>
       )}
     </div>

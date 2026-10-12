@@ -958,7 +958,8 @@ a.session-tree-main {
    cell is the one chosen (a tab, the open search). */
 .sidebar-tab,
 .sidebar-new-button,
-.sidebar-search-toggle {
+.sidebar-search-toggle,
+.sidebar-logout-button {
   display: flex;
   flex: none;
   align-items: center;
@@ -986,8 +987,11 @@ a.session-tree-main {
    is no cell, and in the tabs layout the spacer leaves a gap after the last
    tab at most widths. Its -1px margin lays that line over the last tab's
    right one where the spacer has collapsed, and keeps New's footprint (and
-   so the fit levels) what it was without the line. */
-.sidebar-new-button {
+   so the fit levels) what it was without the line. Log out, when the
+   password is on, is the cell before New and closes that side instead;
+   New's line is then the divider between them. */
+.sidebar-new-button,
+.sidebar-logout-button {
   margin-left: -1px;
   border-left: 1px solid var(--border);
 }
@@ -999,7 +1003,8 @@ a.session-tree-main {
 
 .sidebar-tab:hover,
 .sidebar-new-button:not(:disabled):hover,
-.sidebar-search-toggle:hover {
+.sidebar-search-toggle:hover,
+.sidebar-logout-button:not(:disabled):hover {
   background: var(--bg-hover);
   color: var(--text);
 }
@@ -1077,12 +1082,14 @@ a.session-tree-main {
   font-weight: 500;
 }
 
-.sidebar-search-toggle {
+.sidebar-search-toggle,
+.sidebar-logout-button {
   width: 36px;
   padding: 0;
 }
 
-.sidebar-new-button:disabled {
+.sidebar-new-button:disabled,
+.sidebar-logout-button:disabled {
   color: var(--text-dim);
   cursor: not-allowed;
 }
@@ -1118,6 +1125,7 @@ a.session-tree-main {
 
 .sidebar-new-button:focus-visible,
 .sidebar-search-toggle:focus-visible,
+.sidebar-logout-button:focus-visible,
 .sidebar-tab:focus-visible,
 .sidebar-archive-back:focus-visible,
 .sidebar-tool-button:focus-visible,
@@ -1610,6 +1618,7 @@ a.session-tree-main {
   .sidebar-tab,
   .sidebar-new-button,
   .sidebar-search-toggle,
+  .sidebar-logout-button,
   .sidebar-tool-button {
     transition: none;
   }
