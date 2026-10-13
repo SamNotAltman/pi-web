@@ -425,6 +425,33 @@ test("the attach button takes any file when the chat handles them, and images on
   assert.match(fileInput(render({})), /accept="image\/\*"/);
 });
 
+test("a New button sits between attach and the model selector when a fresh session can start", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(I18nProvider, null, React.createElement(ChatInput, {
+      onSend() {},
+      onAbort() {},
+      isStreaming: false,
+      cwd: "/tmp/pi-web",
+      onNewSession() {},
+      model: { provider: "xai", modelId: "grok" },
+      onModelChange() {},
+      modelList: [{ id: "grok", name: "Grok", provider: "xai" }],
+    })),
+  );
+  const attach = html.indexOf('title="Attach files"');
+  const neu = html.indexOf('aria-label="New"');
+  const model = html.indexOf("Change model");
+  assert.ok(attach >= 0 && neu > attach && model > neu);
+  assert.match(html, /New session in \/tmp\/pi-web/);
+
+  const without = renderToStaticMarkup(
+    React.createElement(I18nProvider, null, React.createElement(ChatInput, {
+      onSend() {}, onAbort() {}, isStreaming: false,
+    })),
+  );
+  assert.doesNotMatch(without, /aria-label="New"/);
+});
+
 test("picked files go to the chat's attach handler, or attach as images without one (#1101)", () => {
   const photo = new File(["x"], "photo.png", { type: "image/png" });
   const report = new File(["x"], "report.pdf", { type: "application/pdf" });

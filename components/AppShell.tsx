@@ -943,6 +943,11 @@ export function AppShell() {
     activeCwd,
   });
 
+  const startFreshSession = useCallback(() => {
+    if (!activeCwd) return;
+    handleNewSession(`composer-${Date.now()}`, activeCwd);
+  }, [activeCwd, handleNewSession]);
+
   // Client-built transient SessionInfo (new session / fork) lacks the
   // server-computed projectKey, which the same-project check in
   // handleCwdChange relies on. Hydrate it from the session list so switching
@@ -2564,6 +2569,7 @@ export function AppShell() {
               onFilesUploaded={handleExplorerRefresh}
               onOpenSubagent={handleOpenSubagentTab}
               onAskInNewChat={handleAskInNewChat}
+              onNewSession={startFreshSession}
               quoteSelectionEnabled={quoteSelectionEnabled}
               initialPrompt={pendingQuotePrompt?.sessionId === selectedSession?.id ? pendingQuotePrompt?.text : undefined}
               onInitialPromptConsumed={() => setPendingQuotePrompt(null)}
